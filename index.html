@@ -11,11 +11,10 @@
 <body>
 
     <div class="osrs-panel osrs-game-frame">
-        <!-- Header -->
         <header class="osrs-panel osrs-game-header">
             <div class="resource-display">
                 <div class="resource-box">
-                    <img src="https://oldschool.runescape.wiki/images/Coins_icon.png" alt="PP" class="resource-icon">
+                    <img src="https://oldschool.runescape.wiki/images/Shiny_key.png" alt="PP" class="resource-icon">
                     <span id="pp-display">0</span>
                 </div>
 
@@ -30,8 +29,8 @@
                 <div class="toggle-icon" data-view="tasks-view">
                     <i class="fas fa-tasks" alt="Tasks"></i>
                 </div>
-                <div class="toggle-icon" data-view="skills-view">
-                    <img src="https://oldschool.runescape.wiki/images/Skills_icon.png" alt="Skills">
+                <div class="toggle-icon" data-view="unlocks-view">
+                    <img src="https://oldschool.runescape.wiki/images/Skills_icon.png" alt="Unlocks">
                 </div>
                 <div class="toggle-icon" data-view="quests-view">
                     <img src="https://oldschool.runescape.wiki/images/Quest_point_icon.png" alt="Quests">
@@ -39,36 +38,30 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="osrs-game-content">
-            <!-- Talent Tree View -->
             <div id="talent-tree-view" class="content-view active">
                 <div id="tree-canvas">
-                    <svg class="tree-connections" id="tree-svg"></svg>
+                    <svg id="tree-svg" class="tree-svg-layer"></svg>
                     <div class="tree-container" id="tree-container"></div>
                 </div>
             </div>
 
-            <!-- Tasks View -->
             <div id="tasks-view" class="content-view list-view">
                 <h2 class="view-title">Tasks</h2>
                 <ul class="task-list" id="task-list-container"></ul>
             </div>
 
-            <!-- Skills View -->
-            <div id="skills-view" class="content-view grid-view">
-                <h2 class="view-title">Skills</h2>
-                <div class="stats-grid" id="stats-grid-container"></div>
+            <div id="unlocks-view" class="content-view list-view">
+                <h2 class="view-title">All Unlocks</h2>
+                <div id="unlocks-list-container"></div>
             </div>
 
-            <!-- Quests View -->
             <div id="quests-view" class="content-view list-view">
                 <h2 class="view-title">Quests</h2>
                 <ul class="quest-list" id="quest-list-container"></ul>
             </div>
         </main>
 
-        <!-- Log Panel -->
         <footer class="log-panel" id="log-panel">
             <div id="log"></div>
         </footer>
