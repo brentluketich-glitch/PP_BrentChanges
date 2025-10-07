@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSRS Plugin - Node Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-panel: #362f26;
+            --border-dark: #000000;
+            --border-bevel: #5a5245;
+            --border-highlight: #988e80;
+            --text-yellow: #ffff00;
+            --text-orange: #ff981f;
+            --text-light-grey: #c8c8c8;
+            --line-locked: #4a4a4a;
+            --line-unlocked: #d4af37;
+            --node-selected: #5cb85c;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: var(--bg-dark);
+            color: var(--text-orange);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            font-size: 12px;
+            image-rendering: pixelated;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .osrs-panel {
+            background-color: var(--bg-panel);
+            border: 2px solid var(--border-dark);
+            box-shadow: inset 0 0 0 2px var(--border-bevel);
+        }
+
+        .editor-container {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 40px);
+            gap: 20px;
+        }
+
+        .tree-panel {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+        .tree-panel:active {
+            cursor: grabbing;
+        }
+
+        .controls-panel {
+            width: 450px;
+            flex-shrink: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .controls-panel h2 {
+            color: var(--text-yellow);
+            font-size: 1.1em;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border-bevel);
+            text-shadow: 1px 1px var(--border-dark);
+            margin: 0 0 10px 0;
+        }
+
+        #tree-canvas {
+            position: absolute;
+            width: 4000px;
+            height: 4000px;
+            transform-origin: top left;
+            background-image: radial-gradient(var(--border-bevel) 1px, transparent 1px);
+            background-size: 25px 25px;
+        }
+
+        .tree-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+        .node {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--line-unlocked);
+            background-color: #2a2a2a;
+            z-index: 1; 
+            cursor: grab;
+        }
+        .node.dragging {
+            cursor: grabbing;
+            border-color: #00aeff;
+            box-shadow: 0 0 15px #00aeff;
+            z-index: 1000;
+        }
+        .node.selected {
+            border-color: var(--node-selected);
+            box-shadow: 0 0 15px var(--node-selected);
+        }
+
+        .node-major { width: 60px; height: 60px; }
+        .node-minor { width: 40px; height: 40px; }
+
+        .node .node-icon {
+            width: 70%;
+            height: 70%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .tree-svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #tree-svg line {
+            stroke: var(--line-unlocked);
+            stroke-width: 3px;
+        }
+        
+        .info-box, .form-box {
+            background-color: var(--bg-dark);
+            padding: 10px;
+            border: 1px solid var(--border-dark);
+            box-shadow: inset 0 0 0 1px var(--border-bevel);
+        }
+        .info-box p, .form-box p {
+            margin: 0 0 8px 0;
+            color: var(--text-light-grey);
+        }
+        .info-box span {
+            color: var(--text-yellow);
+        }
+        
+        .action-btn, .osrs-input {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            color: var(--text-yellow);
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            box-shadow: inset 0 0 0 1px var(--border-bevel);
+            padding: 8px 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .action-btn {
+            cursor: pointer;
+            text-align: center;
+        }
+        .action-btn:hover {
+            background-color: #4a443b;
+        }
+
+        #output-data {
+            flex-grow: 1;
+            width: 100%;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            box-shadow: inset 0 0 0 1px var(--border-bevel);
+            color: var(--text-light-grey);
+            font-family: monospace;
+            font-size: 11px;
+            resize: none;
+            padding: 10px;
+        }
+        
+        #dep-editor {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            box-shadow: inset 0 0 0 1px var(--border-bevel);
+            padding: 10px;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+        }
+        #dep-editor h3 {
+            font-size: 10px;
+            color: var(--text-yellow);
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+        #dep-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        #dep-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            color: var(--text-light-grey);
+            font-size: 10px;
+        }
+        #dep-list input {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="editor-container">
+        <div class="osrs-panel tree-panel" id="tree-panel">
+            <div id="tree-canvas">
+                <svg id="tree-svg" class="tree-svg-layer"></svg>
+                <div class="tree-container" id="tree-container"></div>
+            </div>
+        </div>
+
+        <div class="osrs-panel controls-panel">
+            <h2>Node Editor</h2>
+            
+             <div class="form-box">
+                <input type="text" id="new-node-name" class="osrs-input" placeholder="New node name...">
+                <button class="action-btn" id="create-node-btn" style="margin-top: 10px;">Create New Node</button>
+            </div>
+
+            <div class="info-box">
+                <p>Selected: <span id="info-node-name">None</span></p>
+                <p>X: <span id="info-node-x">--</span>, Y: <span id="info-node-y">--</span></p>
+            </div>
+
+            <div id="dep-editor">
+                <h3>Dependencies</h3>
+                <ul id="dep-list"></ul>
+            </div>
+
+            <button class="action-btn" id="generate-btn">Generate Output</button>
+            <textarea id="output-data" readonly placeholder="Click 'Generate Output' to see the updated TREE_DATA object here..."></textarea>
+            <button class="action-btn" id="copy-btn">Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const TREE_DATA = {
+            genesis: { type: 'major', name: 'Genesis', desc: 'The origin point of your journey.', cost: 0, status: 'unlocked', deps: [], pos: { x: '50%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Achievement_Diaries_icon.png' },
+            path_might: { type: 'major', name: 'Path of Might', desc: 'Unlock Melee skills and related gathering/processing.', cost: 0, status: 'unlocked', deps: ['genesis'], pos: { x: '30%', y: '30%' }, icon: 'https://oldschool.runescape.wiki/images/Combat_icon.png' },
+            path_dexterity: { type: 'major', name: 'Path of Dexterity', desc: 'Unlock Ranged skills and related utility/artisan skills.', cost: 0, status: 'unlocked', deps: ['genesis'], pos: { x: '50%', y: '80%' }, icon: 'https://oldschool.runescape.wiki/images/Agility_icon.png' }, 
+            path_wisdom: { type: 'major', name: 'Path of Wisdom', desc: 'Unlock Magic, Prayer, and support skills.', cost: 0, status: 'unlocked', deps: ['genesis'], pos: { x: '70%', y: '30%' }, icon: 'https://oldschool.runescape.wiki/images/Holy_symbol.png' }, 
+            attack: { type: 'major', name: 'Attack', desc: 'Unlock the Attack skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '20%', y: '35%' }, icon: 'https://oldschool.runescape.wiki/images/Attack_icon.png' },
+            strength: { type: 'major', name: 'Strength', desc: 'Unlock the Strength skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '35%', y: '20%' }, icon: 'https://oldschool.runescape.wiki/images/Strength_icon.png' },
+            defence: { type: 'major', name: 'Defence', desc: 'Unlock the Defence skill.', cost: 2, status: 'locked', deps: ['attack', 'strength'], pos: { x: '25%', y: '15%' }, icon: 'https://oldschool.runescape.wiki/images/Defence_icon.png' },
+            bronze_armor: { type: 'minor', name: 'Bronze Armor', desc: 'Equip Bronze melee gear.', cost: 1, status: 'locked', deps: ['defence'], pos: { x: '20%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Bronze_platebody.png' },
+            iron_armor: { type: 'minor', name: 'Iron Armor', desc: 'Equip Iron melee gear.', cost: 1, status: 'locked', deps: ['bronze_armor'], pos: { x: '15%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Iron_platebody.png' },
+            steel_armor: { type: 'minor', name: 'Steel Armor', desc: 'Equip Steel melee gear.', cost: 1, status: 'locked', deps: ['iron_armor'], pos: { x: '10%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Steel_platebody.png' },
+            black_armor: { type: 'minor', name: 'Black Armor', desc: 'Equip Black melee gear.', cost: 1, status: 'locked', deps: ['steel_armor'], pos: { x: '5%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Black_platebody.png' },
+            mithril_armor: { type: 'minor', name: 'Mithril Armor', desc: 'Equip Mithril melee gear.', cost: 1, status: 'locked', deps: ['black_armor'], pos: { x: '0%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Mithril_platebody.png' },
+            adamant_armor: { type: 'minor', name: 'Adamant Armor', desc: 'Equip Adamant melee gear.', cost: 1, status: 'locked', deps: ['mithril_armor'], pos: { x: '-5%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Adamant_platebody.png' },
+            quest_dragon_slayer_def: { type: 'minor', name: 'Quest: Dragon Slayer', desc: 'Unlock ability to complete Dragon Slayer.', cost: 1, status: 'locked', deps: ['adamant_armor'], unlocksQuest: 'quest_dragon_slayer', pos: { x: '-10%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            rune_armor: { type: 'minor', name: 'Rune Armor', desc: 'Equip Rune melee gear.', cost: 1, status: 'locked', deps: ['quest_dragon_slayer_def'], pos: { x: '-12%', y: '-2%' }, icon: 'https://oldschool.runescape.wiki/images/Rune_platebody.png' },
+            bronze_weapon: { type: 'minor', name: 'Bronze Weapons', desc: 'Use Bronze weapons.', cost: 1, status: 'locked', deps: ['attack'], pos: { x: '12%', y: '40%' }, icon: 'https://oldschool.runescape.wiki/images/Bronze_sword.png' },
+            iron_weapon: { type: 'minor', name: 'Iron Weapons', desc: 'Use Iron weapons.', cost: 1, status: 'locked', deps: ['bronze_weapon'], pos: { x: '7%', y: '45%' }, icon: 'https://oldschool.runescape.wiki/images/Iron_sword.png' },
+            steel_weapon: { type: 'minor', name: 'Steel Weapons', desc: 'Use Steel weapons.', cost: 1, status: 'locked', deps: ['iron_weapon'], pos: { x: '2%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Steel_sword.png' },
+            black_weapon: { type: 'minor', name: 'Black Weapons', desc: 'Use Black weapons.', cost: 1, status: 'locked', deps: ['steel_weapon'], pos: { x: '-3%', y: '55%' }, icon: 'https://oldschool.runescape.wiki/images/Black_sword.png' },
+            mithril_weapon: { type: 'minor', name: 'Mithril Weapons', desc: 'Use Mithril weapons.', cost: 1, status: 'locked', deps: ['black_weapon'], pos: { x: '-8%', y: '60%' }, icon: 'https://oldschool.runescape.wiki/images/Mithril_sword.png' },
+            adamant_weapon: { type: 'minor', name: 'Adamant Weapons', desc: 'Use Adamant weapons.', cost: 1, status: 'locked', deps: ['mithril_weapon'], pos: { x: '-3%', y: '65%' }, icon: 'https://oldschool.runescape.wiki/images/Adamant_sword.png' },
+            rune_weapon: { type: 'minor', name: 'Rune Weapons', desc: 'Use Rune weapons.', cost: 1, status: 'locked', deps: ['adamant_weapon'], pos: { x: '2%', y: '70%' }, icon: 'https://oldschool.runescape.wiki/images/Rune_sword.png' },
+            mining: { type: 'major', name: 'Mining', desc: 'Unlock the Mining skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '18%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Mining_icon.png' },
+            quest_knights_sword: { type: 'minor', name: 'Quest: Knight\'s Sword', desc: 'Unlock ability to complete The Knight\'s Sword.', cost: 1, status: 'locked', deps: ['mining'], unlocksQuest: 'quest_knights_sword', pos: { x: '13%', y: '60%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            smithing: { type: 'major', name: 'Smithing', desc: 'Unlock the Smithing skill.', cost: 0, status: 'locked', deps: ['quest_knights_sword'], pos: { x: '8%', y: '70%' }, icon: 'https://oldschool.runescape.wiki/images/Smithing_icon.png' },
+            slayer: { type: 'major', name: 'Slayer', desc: 'Unlock the Slayer skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '40%', y: '15%' }, icon: 'https://oldschool.runescape.wiki/images/Slayer_icon.png' },
+            ranged: { type: 'major', name: 'Ranged', desc: 'Unlock the Ranged skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '40%', y: '88%' }, icon: 'https://oldschool.runescape.wiki/images/Ranged_icon.png' },
+            oak_equip: { type: 'minor', name: 'Oak Equipment', desc: 'Equip Oak bows/ammo.', cost: 1, status: 'locked', deps: ['ranged'], pos: { x: '35%', y: '95%' }, icon: 'https://oldschool.runescape.wiki/images/Oak_longbow.png' },
+            willow_equip: { type: 'minor', name: 'Willow Equipment', desc: 'Equip Willow bows/ammo.', cost: 1, status: 'locked', deps: ['oak_equip'], pos: { x: '30%', y: '102%' }, icon: 'https://oldschool.runescape.wiki/images/Willow_longbow.png' },
+            maple_equip: { type: 'minor', name: 'Maple Equipment', desc: 'Equip Maple bows/ammo.', cost: 1, status: 'locked', deps: ['willow_equip'], pos: { x: '25%', y: '109%' }, icon: 'https://oldschool.runescape.wiki/images/Maple_longbow.png' },
+            agility: { type: 'major', name: 'Agility', desc: 'Unlock the Agility skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '60%', y: '88%' }, icon: 'https://oldschool.runescape.wiki/images/Agility_icon.png' },
+            thieving: { type: 'major', name: 'Thieving', desc: 'Unlock the Thieving skill.', cost: 2, status: 'locked', deps: ['agility'], pos: { x: '70%', y: '92%' }, icon: 'https://oldschool.runescape.wiki/images/Thieving_icon.png' }, 
+            hunter: { type: 'major', name: 'Hunter', desc: 'Unlock the Hunter skill.', cost: 2, status: 'locked', deps: ['agility'], pos: { x: '70%', y: '82%' }, icon: 'https://oldschool.runescape.wiki/images/Hunter_icon.png' },
+            woodcutting: { type: 'major', name: 'Woodcutting', desc: 'Unlock the Woodcutting skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '50%', y: '95%' }, icon: 'https://oldschool.runescape.wiki/images/Woodcutting_icon.png' },
+            fletching: { type: 'major', name: 'Fletching', desc: 'Unlock the Fletching skill.', cost: 2, status: 'locked', deps: ['woodcutting'], pos: { x: '45%', y: '105%' }, icon: 'https://oldschool.runescape.wiki/images/Fletching_icon.png' }, 
+            firemaking: { type: 'major', name: 'Firemaking', desc: 'Unlock the Firemaking skill.', cost: 2, status: 'locked', deps: ['woodcutting'], pos: { x: '55%', y: '105%' }, icon: 'https://oldschool.runescape.wiki/images/Firemaking_icon.png' },
+            fishing: { type: 'major', name: 'Fishing', desc: 'Unlock the Fishing skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '80%', y: '90%' }, icon: 'https://oldschool.runescape.wiki/images/Fishing_icon.png' },
+            quest_sheep_shearer: { type: 'minor', name: 'Quest: Sheep Shearer', desc: 'Unlock ability to complete Sheep Shearer.', cost: 1, status: 'locked', deps: ['path_dexterity'], unlocksQuest: 'quest_sheep_shearer', pos: { x: '65%', y: '105%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            crafting: { type: 'major', name: 'Crafting', desc: 'Unlock the Crafting skill.', cost: 0, status: 'locked', deps: ['fletching', 'quest_sheep_shearer'], pos: { x: '50%', y: '115%' }, icon: 'https://oldschool.runescape.wiki/images/Crafting_icon.png' },
+            quest_imp_catcher: { type: 'minor', name: 'Quest: Imp Catcher', desc: 'Unlock ability to complete Imp Catcher.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_imp_catcher', pos: { x: '80%', y: '25%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            magic: { type: 'major', name: 'Magic', desc: 'Unlock the Magic skill.', cost: 0, status: 'locked', deps: ['quest_imp_catcher'], pos: { x: '90%', y: '25%' }, icon: 'https://oldschool.runescape.wiki/images/Magic_icon.png' },
+            quest_druidic_ritual: { type: 'minor', name: 'Quest: Druidic Ritual', desc: 'Unlock ability to complete Druidic Ritual.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_druidic_ritual', pos: { x: '65%', y: '45%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            herblore: { type: 'major', name: 'Herblore', desc: 'Unlock the Herblore skill.', cost: 0, status: 'locked', deps: ['quest_druidic_ritual'], pos: { x: '70%', y: '55%' }, icon: 'https://oldschool.runescape.wiki/images/Herblore_icon.png' },
+            farming: { type: 'major', name: 'Farming', desc: 'Unlock the Farming skill.', cost: 2, status: 'locked', deps: ['herblore'], pos: { x: '75%', y: '65%' }, icon: 'https://oldschool.runescape.wiki/images/Farming_icon.png' },
+            quest_daddys_home: { type: 'minor', name: "Quest: Daddy's Home", desc: "Unlock ability to complete Daddy's Home.", cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_daddys_home', pos: { x: '85%', y: '70%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            construction: { type: 'major', name: 'Construction', desc: 'Unlock the Construction skill.', cost: 2, status: 'locked', deps: ['quest_daddys_home'], pos: { x: '95%', y: '80%' }, icon: 'https://oldschool.runescape.wiki/images/Construction_icon.png' }, 
+            standard_spellbook: { type: 'minor', name: 'Standard Spellbook', desc: 'Access the basic Standard spellbook.', cost: 1, status: 'locked', deps: ['magic'], pos: { x: '100%', y: '30%' }, icon: 'https://oldschool.runescape.wiki/images/Standard_spellbook.png' },
+            magic_teleports: { type: 'minor', name: 'Teleports', desc: 'Unlock basic teleport spells.', cost: 1, status: 'locked', deps: ['standard_spellbook'], pos: { x: '100%', y: '40%' }, icon: 'https://oldschool.runescape.wiki/images/Lumbridge_Teleport_icon.png' },
+            high_alchemy: { type: 'minor', name: 'High Alchemy', desc: 'Unlock High Alchemy spell.', cost: 1, status: 'locked', deps: ['magic_teleports'], pos: { x: '95%', y: '48%' }, icon: 'https://oldschool.runescape.wiki/images/High_Alchemy.png' },
+            enchantment: { type: 'minor', name: 'Enchantment', desc: 'Unlock basic Enchantment spells.', cost: 1, status: 'locked', deps: ['magic_teleports'], pos: { x: '105%', y: '48%' }, icon: 'https://oldschool.runescape.wiki/images/Enchant_level_3_jewellery.png' },
+            quest_restless_ghost: { type: 'minor', name: 'Quest: Restless Ghost', desc: 'Unlock ability to complete The Restless Ghost.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_restless_ghost', pos: { x: '75%', y: '15%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            prayer: { type: 'major', name: 'Prayer', desc: 'Unlock the Prayer skill.', cost: 0, status: 'locked', deps: ['quest_restless_ghost'], pos: { x: '85%', y: '10%' }, icon: 'https://oldschool.runescape.wiki/images/Prayer_icon.png' },
+            quest_cooks_assistant: { type: 'minor', name: 'Quest: Cooks Assistant', desc: 'Unlock ability to complete Cooks Assistant.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_cooks_assistant', pos: { x: '60%', y: '45%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            cooking: { type: 'major', name: 'Cooking', desc: 'Unlock the Cooking skill.', cost: 2, status: 'locked', deps: ['quest_cooks_assistant'], pos: { x: '60%', y: '55%' }, icon: 'https://oldschool.runescape.wiki/images/Cooking_icon.png' },
+            quest_rune_mysteries: { type: 'minor', name: 'Quest: Rune Mysteries', desc: 'Unlock ability to complete Rune Mysteries.', cost: 1, status: 'locked', deps: ['magic'], unlocksQuest: 'quest_rune_mysteries', pos: { x: '95%', y: '18%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+            runecraft: { type: 'major', name: 'Runecraft', desc: 'Unlock the Runecraft skill.', cost: 0, status: 'locked', deps: ['quest_rune_mysteries'], pos: { x: '102%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Runecraft_icon.png' },
+        };
+        const treePanel = document.getElementById('tree-panel');
+        const treeCanvas = document.getElementById('tree-canvas');
+        const treeContainer = document.getElementById('tree-container');
+        const treeSvg = document.getElementById('tree-svg');
+        const generateBtn = document.getElementById('generate-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const outputData = document.getElementById('output-data');
+        const infoNodeName = document.getElementById('info-node-name');
+        const infoNodeX = document.getElementById('info-node-x');
+        const infoNodeY = document.getElementById('info-node-y');
+        const depEditor = document.getElementById('dep-editor');
+        const depList = document.getElementById('dep-list');
+        const createNodeBtn = document.getElementById('create-node-btn');
+        const newNodeNameInput = document.getElementById('new-node-name');
+
+        let isDragging = false;
+        let isPanning = false;
+        let activeNodeEl = null;
+        let selectedNodeId = null;
+        let startX, startY;
+        let canvasX = 0, canvasY = 0;
+        let initialCanvasX = 0, initialCanvasY = 0;
+        let scale = 0.5;
+        const scaleFactor = 0.1;
+        const minScale = 0.2;
+        const maxScale = 2.5;
+        let nodeStartX, nodeStartY;
+        let originalNodeLeft, originalNodeTop;
+
+        function applyTransform() {
+            treeCanvas.style.transform = `translate(${canvasX}px, ${canvasY}px) scale(${scale})`;
+        }
+
+        function renderLines() {
+            treeSvg.innerHTML = '';
+            Object.keys(TREE_DATA).forEach(id => {
+                const node = TREE_DATA[id];
+                if (node.deps && node.deps.length > 0) {
+                    node.deps.forEach(depId => {
+                        const parentNode = TREE_DATA[depId];
+                        if (!parentNode) return;
+
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', parentNode.pos.x);
+                        line.setAttribute('y1', parentNode.pos.y);
+                        line.setAttribute('x2', node.pos.x);
+                        line.setAttribute('y2', node.pos.y);
+                        treeSvg.appendChild(line);
+                    });
+                }
+            });
+        }
+
+        function populateDepEditor(nodeId) {
+            depEditor.style.display = 'flex';
+            depList.innerHTML = '';
+            const currentNodeDeps = TREE_DATA[nodeId].deps;
+
+            Object.keys(TREE_DATA).sort((a,b) => TREE_DATA[a].name.localeCompare(TREE_DATA[b].name)).forEach(potentialParentId => {
+                if (potentialParentId === nodeId) return; // Can't depend on self
+
+                const li = document.createElement('li');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = potentialParentId;
+                checkbox.id = `dep-${potentialParentId}`;
+                if (currentNodeDeps.includes(potentialParentId)) {
+                    checkbox.checked = true;
+                }
+
+                checkbox.addEventListener('change', (e) => {
+                    const parentId = e.target.value;
+                    const isChecked = e.target.checked;
+                    const deps = TREE_DATA[nodeId].deps;
+                    if (isChecked) {
+                        if (!deps.includes(parentId)) {
+                            deps.push(parentId);
+                        }
+                    } else {
+                        const index = deps.indexOf(parentId);
+                        if (index > -1) {
+                            deps.splice(index, 1);
+                        }
+                    }
+                    renderLines();
+                });
+
+                const label = document.createElement('label');
+                label.htmlFor = `dep-${potentialParentId}`;
+                label.textContent = TREE_DATA[potentialParentId].name;
+                
+                li.appendChild(checkbox);
+                li.appendChild(label);
+                depList.appendChild(li);
+            });
+        }
+
+        function selectNode(nodeId) {
+            if (selectedNodeId && document.getElementById(selectedNodeId)) {
+                document.getElementById(selectedNodeId).classList.remove('selected');
+            }
+            
+            selectedNodeId = nodeId;
+            const nodeEl = document.getElementById(nodeId);
+            if (!nodeEl) return;
+
+            nodeEl.classList.add('selected');
+            
+            const nodeData = TREE_DATA[nodeId];
+            infoNodeName.textContent = nodeData.name;
+            infoNodeX.textContent = nodeData.pos.x;
+            infoNodeY.textContent = nodeData.pos.y;
+            
+            populateDepEditor(nodeId);
+        }
+
+        function deselectAll() {
+             if (selectedNodeId && document.getElementById(selectedNodeId)) {
+                document.getElementById(selectedNodeId).classList.remove('selected');
+            }
+            selectedNodeId = null;
+            depEditor.style.display = 'none';
+            infoNodeName.textContent = 'None';
+            infoNodeX.textContent = '--';
+            infoNodeY.textContent = '--';
+        }
+
+        function renderNodes() {
+            treeContainer.innerHTML = '';
+            Object.keys(TREE_DATA).forEach(id => {
+                const node = TREE_DATA[id];
+                const nodeEl = document.createElement('div');
+                nodeEl.id = id;
+                nodeEl.className = `node node-${node.type}`;
+                nodeEl.style.left = node.pos.x;
+                nodeEl.style.top = node.pos.y;
+                nodeEl.style.transform = 'translate(-50%, -50%)';
+                nodeEl.innerHTML = `<img src="${node.icon}" class="node-icon" alt="${node.name}">`;
+                
+                nodeEl.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    selectNode(id);
+                    isDragging = true;
+                    activeNodeEl = e.currentTarget;
+                    activeNodeEl.classList.add('dragging');
+                    const containerRect = treeContainer.getBoundingClientRect();
+                    nodeStartX = e.clientX;
+                    nodeStartY = e.clientY;
+                    originalNodeLeft = (parseFloat(activeNodeEl.style.left) / 100) * containerRect.width;
+                    originalNodeTop = (parseFloat(activeNodeEl.style.top) / 100) * containerRect.height;
+                });
+                treeContainer.appendChild(nodeEl);
+            });
+        }
+        
+        treePanel.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.node')) return;
+            deselectAll();
+            isPanning = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialCanvasX = canvasX;
+            initialCanvasY = canvasY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                e.preventDefault();
+                canvasX = initialCanvasX + (e.clientX - startX);
+                canvasY = initialCanvasY + (e.clientY - startY);
+                applyTransform();
+            } else if (isDragging && activeNodeEl) {
+                e.preventDefault();
+                const containerRect = treeContainer.getBoundingClientRect();
+                const newLeft = originalNodeLeft + ((e.clientX - nodeStartX) / scale);
+                const newTop = originalNodeTop + ((e.clientY - nodeStartY) / scale);
+                const xPercent = (newLeft / containerRect.width * 100).toFixed(2);
+                const yPercent = (newTop / containerRect.height * 100).toFixed(2);
+                activeNodeEl.style.left = `${xPercent}%`;
+                activeNodeEl.style.top = `${yPercent}%`;
+                const nodeId = activeNodeEl.id;
+                TREE_DATA[nodeId].pos.x = `${xPercent}%`;
+                TREE_DATA[nodeId].pos.y = `${yPercent}%`;
+                infoNodeX.textContent = `${xPercent}%`;
+                infoNodeY.textContent = `${yPercent}%`;
+                renderLines();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDragging && activeNodeEl) {
+                activeNodeEl.classList.remove('dragging');
+            }
+            isDragging = false;
+            isPanning = false;
+            activeNodeEl = null;
+        });
+
+        treePanel.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = treePanel.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const delta = e.deltaY * -0.01;
+            const newScale = Math.min(Math.max(minScale, scale + delta * scaleFactor), maxScale);
+            if (newScale !== scale) {
+                const scaleChange = newScale / scale;
+                canvasX = mouseX - (mouseX - canvasX) * scaleChange;
+                canvasY = mouseY - (mouseY - canvasY) * scaleChange;
+                scale = newScale;
+                applyTransform();
+            }
+        });
+        
+        createNodeBtn.addEventListener('click', () => {
+            const name = newNodeNameInput.value.trim();
+            if (!name) {
+                newNodeNameInput.style.boxShadow = 'inset 0 0 0 2px red';
+                return;
+            }
+            newNodeNameInput.style.boxShadow = 'inset 0 0 0 1px var(--border-bevel)';
+            let baseId = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+            let newId = baseId;
+            let counter = 1;
+            while (TREE_DATA[newId]) {
+                newId = `${baseId}_${counter++}`;
+            }
+            TREE_DATA[newId] = {
+                type: 'minor', name: name, desc: 'A new node.', cost: 1, status: 'locked',
+                deps: [], pos: { x: '50.00%', y: '50.00%' },
+                icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png'
+            };
+            renderNodes();
+            selectNode(newId);
+            newNodeNameInput.value = '';
+        });
+
+        generateBtn.addEventListener('click', () => {
+            const outputString = JSON.stringify(TREE_DATA, Object.keys(TREE_DATA[Object.keys(TREE_DATA)[0]]), 4);
+            outputData.value = `const TREE_DATA = ${outputString};`;
+            outputData.scrollTop = 0;
+        });
+
+        copyBtn.addEventListener('click', () => {
+            outputData.select();
+            document.execCommand('copy');
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => copyBtn.textContent = 'Copy to Clipboard', 1500);
+        });
+
+        // Initial Centering
+        const panelRect = treePanel.getBoundingClientRect();
+        const canvasSize = 4000;
+        canvasX = (panelRect.width / 2) - (canvasSize * 0.5 * scale);
+        canvasY = (panelRect.height / 2) - (canvasSize * 0.5 * scale);
+
+        renderNodes();
+        renderLines();
+        applyTransform();
+    });
+    </script>
+</body>
+</html>
+
