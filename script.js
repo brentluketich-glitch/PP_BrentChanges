@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- CONFIG & DATA ---
     const SKILL_DATA = {
         Attack: { icon: 'https://oldschool.runescape.wiki/images/Attack_icon.png' },
         Strength: { icon: 'https://oldschool.runescape.wiki/images/Strength_icon.png' },
@@ -14,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Herblore: { icon: 'https://oldschool.runescape.wiki/images/Herblore_icon.png' },
         Thieving: { icon: 'https://oldschool.runescape.wiki/images/Thieving_icon.png' },
         Crafting: { icon: 'https://oldschool.runescape.wiki/images/Crafting_icon.png' },
-        Fletching: { icon: 'https://oldschool.runescape.wiki/images/Fletching_icon.png' },
+        Fletching: { icon: 'https://oldschool.runescape.wiki/images/Fletching_icon.png' }, 
         Slayer: { icon: 'https://oldschool.runescape.wiki/images/Slayer_icon.png' },
         Hunter: { icon: 'https://oldschool.runescape.wiki/images/Hunter_icon.png' },
         Mining: { icon: 'https://oldschool.runescape.wiki/images/Mining_icon.png' },
@@ -27,15 +26,24 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let PLAYER_STATE = {
-        pp: 10,
+        pp: 5, 
         skills: Object.keys(SKILL_DATA).reduce((acc, skill) => {
             acc[skill] = { level: 1, unlocked: false };
             return acc;
         }, {}),
         quests: [
-            { name: "Cook's Assistant", status: 'complete' },
-            { name: 'Dragon Slayer', status: 'in_progress' },
-            { name: 'The Restless Ghost', status: 'not_started' },
+            { name: "Cook's Assistant", id: 'quest_cooks_assistant', status: 'not_started' }, 
+            { name: 'Dragon Slayer', id: 'quest_dragon_slayer', status: 'not_started' },
+            { name: 'The Restless Ghost', id: 'quest_restless_ghost', status: 'not_started' },
+            { name: 'Rune Mysteries', id: 'quest_rune_mysteries', status: 'not_started' },
+            { name: 'Sheep Shearer', id: 'quest_sheep_shearer', status: 'not_started' },
+            { name: 'Goblin Diplomacy', id: 'quest_goblin_diplomacy', status: 'not_started' }, 
+            { name: 'Doric\'s Quest', id: 'quest_dorics_quest', status: 'not_started' }, 
+            { name: 'Ernest the Chicken', id: 'quest_ernest_the_chicken', status: 'not_started' },
+            { name: 'Druidic Ritual', id: 'quest_druidic_ritual', status: 'not_started' }, 
+            { name: 'Imp Catcher', id: 'quest_imp_catcher', status: 'not_started' }, 
+            { name: 'The Knight\'s Sword', id: 'quest_knights_sword', status: 'not_started' }, 
+            { name: "Daddy's Home", id: 'quest_daddys_home', status: 'not_started' },
         ]
     };
     PLAYER_STATE.skills.Attack.unlocked = true;
@@ -46,70 +54,145 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let TREE_DATA = {
         genesis: { type: 'major', name: 'Genesis', desc: 'The origin point of your journey.', cost: 0, status: 'unlocked', deps: [], pos: { x: '50%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Achievement_Diaries_icon.png' },
-        // Paths
-        path_might: { type: 'major', name: 'Path of Might', desc: 'Focus on combat skills.', cost: 1, status: 'available', deps: ['genesis'], pos: { x: '50%', y: '35%' }, icon: 'https://oldschool.runescape.wiki/images/Combat_icon.png' },
-        path_craft: { type: 'major', name: 'Path of Craft', desc: 'Focus on artisan skills.', cost: 1, status: 'available', deps: ['genesis'], pos: { x: '30%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Hammer_detail.png' },
-        path_mind: { type: 'major', name: 'Path of Mind', desc: 'Focus on utility and magic.', cost: 1, status: 'available', deps: ['genesis'], pos: { x: '70%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Book_of_knowledge_detail.png' },
-        // Might Unlocks
-        ranged: { type: 'major', name: 'Ranged', desc: 'Unlock the Ranged skill.', cost: 3, status: 'locked', deps: ['path_might'], pos: { x: '65%', y: '25%' }, icon: SKILL_DATA.Ranged.icon },
-        prayer: { type: 'major', name: 'Prayer', desc: 'Unlock the Prayer skill.', cost: 3, status: 'locked', deps: ['path_might'], pos: { x: '35%', y: '25%' }, icon: SKILL_DATA.Prayer.icon },
-        slayer: { type: 'major', name: 'Slayer', desc: 'Unlock the Slayer skill.', cost: 5, status: 'locked', deps: ['path_might'], pos: { x: '50%', y: '10%' }, icon: SKILL_DATA.Slayer.icon },
-        slayer_helmet: { type: 'minor', name: 'Slayer Helmet', desc: 'Ability to craft the Slayer Helmet.', cost: 4, status: 'locked', deps: ['slayer'], pos: { x: '40%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Slayer_helmet_detail.png' },
 
-        // Craft Unlocks
-        gathering: { type: 'major', name: 'The Gatherer', desc: 'Unlock basic gathering skills.', cost: 2, status: 'locked', deps: ['path_craft'], pos: { x: '10%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Butterfly_net_detail.png' },
-        woodcutting: { type: 'minor', name: 'Woodcutting', desc: 'Unlock the Woodcutting skill.', cost: 2, status: 'locked', deps: ['gathering'], pos: { x: '10%', y: '30%' }, icon: SKILL_DATA.Woodcutting.icon },
-        mining: { type: 'minor', name: 'Mining', desc: 'Unlock the Mining skill.', cost: 2, status: 'locked', deps: ['gathering'], pos: { x: '10%', y: '70%' }, icon: SKILL_DATA.Mining.icon },
-        fishing: { type: 'minor', name: 'Fishing', desc: 'Unlock the Fishing skill.', cost: 2, status: 'locked', deps: ['gathering'], pos: { x: '0%', y: '50%' }, icon: SKILL_DATA.Fishing.icon },
-        artisan: { type: 'major', name: 'The Artisan', desc: 'Unlock basic production skills.', cost: 2, status: 'locked', deps: ['path_craft'], pos: { x: '30%', y: '20%' }, icon: 'https://oldschool.runescape.wiki/images/Crafting_icon.png' },
-        smithing: { type: 'minor', name: 'Smithing', desc: 'Unlock the Smithing skill.', cost: 2, status: 'locked', deps: ['artisan', 'mining'], pos: { x: '15%', y: '85%' }, icon: SKILL_DATA.Smithing.icon },
-        crafting: { type: 'minor', name: 'Crafting', desc: 'Unlock the Crafting skill.', cost: 2, status: 'locked', deps: ['artisan'], pos: { x: '30%', y: '5%' }, icon: SKILL_DATA.Crafting.icon },
-        fletching: { type: 'minor', name: 'Fletching', desc: 'Unlock the Fletching skill.', cost: 2, status: 'locked', deps: ['artisan', 'woodcutting'], pos: { x: '18%', y: '15%' }, icon: SKILL_DATA.Fletching.icon },
-        cooking: { type: 'minor', name: 'Cooking', desc: 'Unlock the Cooking skill.', cost: 2, status: 'locked', deps: ['artisan', 'fishing'], pos: { x: '-5%', y: '35%' }, icon: SKILL_DATA.Cooking.icon },
+        // CORE PATHS
+        path_might: { type: 'major', name: 'Path of Might', desc: 'Unlock Melee skills and related gathering/processing.', cost: 0, status: 'unlocked', deps: ['genesis'], pos: { x: '30%', y: '30%' }, icon: 'https://oldschool.runescape.wiki/images/Combat_icon.png' },
+        path_dexterity: { type: 'major', name: 'Path of Dexterity', desc: 'Unlock Ranged skills and related utility/artisan skills.', cost: 0, status: 'unlocked', deps: ['genesis'], pos: { x: '50%', y: '80%' }, icon: 'https://oldschool.runescape.wiki/images/Agility_icon.png' }, 
+        path_wisdom: { type: 'major', name: 'Path of Wisdom', desc: 'Unlock Magic, Prayer, and support skills.', cost: 0, status: 'unlocked', deps: ['genesis'], pos: { x: '70%', y: '30%' }, icon: 'https://oldschool.runescape.wiki/images/Holy_symbol.png' }, 
+        
+        // --- MIGHT UNLOCKS ---
+        attack: { type: 'major', name: 'Attack', desc: 'Unlock the Attack skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '20%', y: '35%' }, icon: SKILL_DATA.Attack.icon },
+        strength: { type: 'major', name: 'Strength', desc: 'Unlock the Strength skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '35%', y: '20%' }, icon: SKILL_DATA.Strength.icon },
+        defence: { type: 'major', name: 'Defence', desc: 'Unlock the Defence skill.', cost: 2, status: 'locked', deps: ['attack', 'strength'], pos: { x: '25%', y: '15%' }, icon: SKILL_DATA.Defence.icon },
+        
+        bronze_armor: { type: 'minor', name: 'Bronze Armor', desc: 'Equip Bronze melee gear.', cost: 1, status: 'locked', deps: ['defence'], pos: { x: '20%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Bronze_platebody.png' },
+        iron_armor: { type: 'minor', name: 'Iron Armor', desc: 'Equip Iron melee gear.', cost: 1, status: 'locked', deps: ['bronze_armor'], pos: { x: '15%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Iron_platebody.png' },
+        steel_armor: { type: 'minor', name: 'Steel Armor', desc: 'Equip Steel melee gear.', cost: 1, status: 'locked', deps: ['iron_armor'], pos: { x: '10%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Steel_platebody.png' },
+        black_armor: { type: 'minor', name: 'Black Armor', desc: 'Equip Black melee gear.', cost: 1, status: 'locked', deps: ['steel_armor'], pos: { x: '5%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Black_platebody.png' },
+        mithril_armor: { type: 'minor', name: 'Mithril Armor', desc: 'Equip Mithril melee gear.', cost: 1, status: 'locked', deps: ['black_armor'], pos: { x: '0%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Mithril_platebody.png' },
+        adamant_armor: { type: 'minor', name: 'Adamant Armor', desc: 'Equip Adamant melee gear.', cost: 1, status: 'locked', deps: ['mithril_armor'], pos: { x: '-5%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Adamant_platebody.png' },
+        
+        quest_dragon_slayer_def: { type: 'minor', name: 'Quest: Dragon Slayer', desc: 'Unlock ability to complete Dragon Slayer.', cost: 1, status: 'locked', deps: ['adamant_armor'], unlocksQuest: 'quest_dragon_slayer', pos: { x: '-10%', y: '5%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        rune_armor: { type: 'minor', name: 'Rune Armor', desc: 'Equip Rune melee gear.', cost: 1, status: 'locked', deps: ['quest_dragon_slayer_def'], pos: { x: '-12%', y: '-2%' }, icon: 'https://oldschool.runescape.wiki/images/Rune_platebody.png' },
 
-        // Mind Unlocks
-        magic: { type: 'major', name: 'Magic', desc: 'Unlock the Magic skill.', cost: 5, status: 'locked', deps: ['path_mind'], pos: { x: '85%', y: '50%' }, icon: SKILL_DATA.Magic.icon },
-        runecraft: { type: 'minor', name: 'Runecraft', desc: 'Unlock the Runecraft skill.', cost: 3, status: 'locked', deps: ['magic'], pos: { x: '95%', y: '40%' }, icon: SKILL_DATA.Runecraft.icon },
-        teleportation: { type: 'minor', name: 'Teleportation', desc: 'Unlock basic teleports.', cost: 2, status: 'locked', deps: ['magic'], pos: { x: '85%', y: '30%' }, icon: 'https://oldschool.runescape.wiki/images/Home_Teleport_icon.png' },
-        agility: { type: 'major', name: 'Agility', desc: 'Unlock the Agility skill.', cost: 3, status: 'locked', deps: ['path_mind'], pos: { x: '70%', y: '75%' }, icon: SKILL_DATA.Agility.icon },
-        thieving: { type: 'major', name: 'Thieving', desc: 'Unlock the Thieving skill.', cost: 3, status: 'locked', deps: ['path_mind'], pos: { x: '80%', y: '80%' }, icon: SKILL_DATA.Thieving.icon },
+        bronze_weapon: { type: 'minor', name: 'Bronze Weapons', desc: 'Use Bronze weapons.', cost: 1, status: 'locked', deps: ['attack'], pos: { x: '12%', y: '40%' }, icon: 'https://oldschool.runescape.wiki/images/Bronze_sword.png' },
+        iron_weapon: { type: 'minor', name: 'Iron Weapons', desc: 'Use Iron weapons.', cost: 1, status: 'locked', deps: ['bronze_weapon'], pos: { x: '7%', y: '45%' }, icon: 'https://oldschool.runescape.wiki/images/Iron_sword.png' },
+        steel_weapon: { type: 'minor', name: 'Steel Weapons', desc: 'Use Steel weapons.', cost: 1, status: 'locked', deps: ['iron_weapon'], pos: { x: '2%', y: '50%' }, icon: 'https://oldschool.runescape.wiki/images/Steel_sword.png' },
+        black_weapon: { type: 'minor', name: 'Black Weapons', desc: 'Use Black weapons.', cost: 1, status: 'locked', deps: ['steel_weapon'], pos: { x: '-3%', y: '55%' }, icon: 'https://oldschool.runescape.wiki/images/Black_sword.png' },
+        mithril_weapon: { type: 'minor', name: 'Mithril Weapons', desc: 'Use Mithril weapons.', cost: 1, status: 'locked', deps: ['black_weapon'], pos: { x: '-8%', y: '60%' }, icon: 'https://oldschool.runescape.wiki/images/Mithril_sword.png' },
+        adamant_weapon: { type: 'minor', name: 'Adamant Weapons', desc: 'Use Adamant weapons.', cost: 1, status: 'locked', deps: ['mithril_weapon'], pos: { x: '-3%', y: '65%' }, icon: 'https://oldschool.runescape.wiki/images/Adamant_sword.png' },
+        rune_weapon: { type: 'minor', name: 'Rune Weapons', desc: 'Use Rune weapons.', cost: 1, status: 'locked', deps: ['adamant_weapon'], pos: { x: '2%', y: '70%' }, icon: 'https://oldschool.runescape.wiki/images/Rune_sword.png' },
+        
+        mining: { type: 'major', name: 'Mining', desc: 'Unlock the Mining skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '18%', y: '50%' }, icon: SKILL_DATA.Mining.icon },
+        quest_knights_sword: { type: 'minor', name: 'Quest: Knight\'s Sword', desc: 'Unlock ability to complete The Knight\'s Sword.', cost: 1, status: 'locked', deps: ['mining'], unlocksQuest: 'quest_knights_sword', pos: { x: '13%', y: '60%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        smithing: { type: 'major', name: 'Smithing', desc: 'Unlock the Smithing skill.', cost: 0, status: 'locked', deps: ['quest_knights_sword'], pos: { x: '8%', y: '70%' }, icon: SKILL_DATA.Smithing.icon },
+
+        slayer: { type: 'major', name: 'Slayer', desc: 'Unlock the Slayer skill.', cost: 2, status: 'locked', deps: ['path_might'], pos: { x: '40%', y: '15%' }, icon: SKILL_DATA.Slayer.icon },
+
+        // --- DEXTERITY UNLOCKS ---
+        ranged: { type: 'major', name: 'Ranged', desc: 'Unlock the Ranged skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '40%', y: '88%' }, icon: SKILL_DATA.Ranged.icon },
+        
+        oak_equip: { type: 'minor', name: 'Oak Equipment', desc: 'Equip Oak bows/ammo.', cost: 1, status: 'locked', deps: ['ranged'], pos: { x: '35%', y: '95%' }, icon: 'https://oldschool.runescape.wiki/images/Oak_longbow.png' },
+        willow_equip: { type: 'minor', name: 'Willow Equipment', desc: 'Equip Willow bows/ammo.', cost: 1, status: 'locked', deps: ['oak_equip'], pos: { x: '30%', y: '102%' }, icon: 'https://oldschool.runescape.wiki/images/Willow_longbow.png' },
+        maple_equip: { type: 'minor', name: 'Maple Equipment', desc: 'Equip Maple bows/ammo.', cost: 1, status: 'locked', deps: ['willow_equip'], pos: { x: '25%', y: '109%' }, icon: 'https://oldschool.runescape.wiki/images/Maple_longbow.png' },
+        
+        agility: { type: 'major', name: 'Agility', desc: 'Unlock the Agility skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '60%', y: '88%' }, icon: SKILL_DATA.Agility.icon },
+        thieving: { type: 'major', name: 'Thieving', desc: 'Unlock the Thieving skill.', cost: 2, status: 'locked', deps: ['agility'], pos: { x: '70%', y: '92%' }, icon: SKILL_DATA.Thieving.icon }, 
+        hunter: { type: 'major', name: 'Hunter', desc: 'Unlock the Hunter skill.', cost: 2, status: 'locked', deps: ['agility'], pos: { x: '70%', y: '82%' }, icon: SKILL_DATA.Hunter.icon },
+
+        woodcutting: { type: 'major', name: 'Woodcutting', desc: 'Unlock the Woodcutting skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '50%', y: '95%' }, icon: SKILL_DATA.Woodcutting.icon },
+        fletching: { type: 'major', name: 'Fletching', desc: 'Unlock the Fletching skill.', cost: 2, status: 'locked', deps: ['woodcutting'], pos: { x: '45%', y: '105%' }, icon: SKILL_DATA.Fletching.icon }, 
+        firemaking: { type: 'major', name: 'Firemaking', desc: 'Unlock the Firemaking skill.', cost: 2, status: 'locked', deps: ['woodcutting'], pos: { x: '55%', y: '105%' }, icon: SKILL_DATA.Firemaking.icon },
+        fishing: { type: 'major', name: 'Fishing', desc: 'Unlock the Fishing skill.', cost: 2, status: 'locked', deps: ['path_dexterity'], pos: { x: '80%', y: '90%' }, icon: SKILL_DATA.Fishing.icon },
+        
+        quest_sheep_shearer: { type: 'minor', name: 'Quest: Sheep Shearer', desc: 'Unlock ability to complete Sheep Shearer.', cost: 1, status: 'locked', deps: ['path_dexterity'], unlocksQuest: 'quest_sheep_shearer', pos: { x: '65%', y: '105%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        crafting: { type: 'major', name: 'Crafting', desc: 'Unlock the Crafting skill.', cost: 0, status: 'locked', deps: ['fletching', 'quest_sheep_shearer'], pos: { x: '50%', y: '115%' }, icon: SKILL_DATA.Crafting.icon },
+
+        // --- WISDOM UNLOCKS ---
+        quest_imp_catcher: { type: 'minor', name: 'Quest: Imp Catcher', desc: 'Unlock ability to complete Imp Catcher.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_imp_catcher', pos: { x: '80%', y: '25%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        magic: { type: 'major', name: 'Magic', desc: 'Unlock the Magic skill.', cost: 0, status: 'locked', deps: ['quest_imp_catcher'], pos: { x: '90%', y: '25%' }, icon: SKILL_DATA.Magic.icon },
+        
+        quest_druidic_ritual: { type: 'minor', name: 'Quest: Druidic Ritual', desc: 'Unlock ability to complete Druidic Ritual.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_druidic_ritual', pos: { x: '65%', y: '45%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        herblore: { type: 'major', name: 'Herblore', desc: 'Unlock the Herblore skill.', cost: 0, status: 'locked', deps: ['quest_druidic_ritual'], pos: { x: '70%', y: '55%' }, icon: SKILL_DATA.Herblore.icon },
+        farming: { type: 'major', name: 'Farming', desc: 'Unlock the Farming skill.', cost: 2, status: 'locked', deps: ['herblore'], pos: { x: '75%', y: '65%' }, icon: SKILL_DATA.Farming.icon },
+        
+        quest_daddys_home: { type: 'minor', name: "Quest: Daddy's Home", desc: "Unlock ability to complete Daddy's Home.", cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_daddys_home', pos: { x: '85%', y: '70%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        construction: { type: 'major', name: 'Construction', desc: 'Unlock the Construction skill.', cost: 2, status: 'locked', deps: ['quest_daddys_home'], pos: { x: '95%', y: '80%' }, icon: SKILL_DATA.Construction.icon }, 
+        
+        standard_spellbook: { type: 'minor', name: 'Standard Spellbook', desc: 'Access the basic Standard spellbook.', cost: 1, status: 'locked', deps: ['magic'], pos: { x: '100%', y: '30%' }, icon: 'https://oldschool.runescape.wiki/images/Standard_spellbook.png' },
+        magic_teleports: { type: 'minor', name: 'Teleports', desc: 'Unlock basic teleport spells.', cost: 1, status: 'locked', deps: ['standard_spellbook'], pos: { x: '100%', y: '40%' }, icon: 'https://oldschool.runescape.wiki/images/Lumbridge_Teleport_icon.png' },
+        high_alchemy: { type: 'minor', name: 'High Alchemy', desc: 'Unlock High Alchemy spell.', cost: 1, status: 'locked', deps: ['magic_teleports'], pos: { x: '95%', y: '48%' }, icon: 'https://oldschool.runescape.wiki/images/High_Alchemy.png' },
+        enchantment: { type: 'minor', name: 'Enchantment', desc: 'Unlock basic Enchantment spells.', cost: 1, status: 'locked', deps: ['magic_teleports'], pos: { x: '105%', y: '48%' }, icon: 'https://oldschool.runescape.wiki/images/Enchant_level_3_jewellery.png' },
+
+        quest_restless_ghost: { type: 'minor', name: 'Quest: Restless Ghost', desc: 'Unlock ability to complete The Restless Ghost.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_restless_ghost', pos: { x: '75%', y: '15%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        prayer: { type: 'major', name: 'Prayer', desc: 'Unlock the Prayer skill.', cost: 0, status: 'locked', deps: ['quest_restless_ghost'], pos: { x: '85%', y: '10%' }, icon: SKILL_DATA.Prayer.icon },
+        
+        quest_cooks_assistant: { type: 'minor', name: 'Quest: Cooks Assistant', desc: 'Unlock ability to complete Cooks Assistant.', cost: 1, status: 'locked', deps: ['path_wisdom'], unlocksQuest: 'quest_cooks_assistant', pos: { x: '60%', y: '45%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        cooking: { type: 'major', name: 'Cooking', desc: 'Unlock the Cooking skill.', cost: 2, status: 'locked', deps: ['quest_cooks_assistant'], pos: { x: '60%', y: '55%' }, icon: SKILL_DATA.Cooking.icon },
+        
+        quest_rune_mysteries: { type: 'minor', name: 'Quest: Rune Mysteries', desc: 'Unlock ability to complete Rune Mysteries.', cost: 1, status: 'locked', deps: ['magic'], unlocksQuest: 'quest_rune_mysteries', pos: { x: '95%', y: '18%' }, icon: 'https://oldschool.runescape.wiki/images/Quest_point_icon.png' },
+        runecraft: { type: 'major', name: 'Runecraft', desc: 'Unlock the Runecraft skill.', cost: 0, status: 'locked', deps: ['quest_rune_mysteries'], pos: { x: '102%', y: '5%' }, icon: SKILL_DATA.Runecraft.icon },
     };
 
     let TASK_DATA = [
-        { id: 'chop_logs', desc: 'Chop 50 normal logs', reward: 1, status: 'incomplete' },
-        { id: 'chop_oaks', desc: 'Chop 100 Oak logs', reward: 3, status: 'incomplete' },
-        { id: 'mine_copper', desc: 'Mine 75 Copper ore', reward: 2, status: 'incomplete' },
-        { id: 'mine_iron', desc: 'Mine 150 Iron ore', reward: 4, status: 'incomplete' },
-        { id: 'fish_shrimp', desc: 'Fish 100 Shrimps', reward: 2, status: 'incomplete' },
-        { id: 'fish_trout', desc: 'Fish 100 Trout', reward: 4, status: 'incomplete' },
-        { id: 'cook_trout', desc: 'Cook 100 Trout', reward: 4, status: 'incomplete' },
-        { id: 'smith_bronze_bar', desc: 'Smith 50 Bronze bars', reward: 3, status: 'incomplete' },
-        { id: 'smith_iron_platebody', desc: 'Smith an Iron platebody', reward: 5, status: 'incomplete' },
-        { id: 'fletch_headless_arrows', desc: 'Fletch 250 headless arrows', reward: 3, status: 'incomplete' },
-        { id: 'kill_cows', desc: 'Kill 25 Cows in Lumbridge', reward: 1, status: 'incomplete' },
-        { id: 'kill_goblins', desc: 'Kill 50 Goblins', reward: 2, status: 'incomplete' },
-        { id: 'complete_cooks_assistant', desc: "Complete the Cook's Assistant quest", reward: 5, status: 'incomplete' },
-        { id: 'bury_bones', desc: 'Bury 50 bones', reward: 2, status: 'incomplete' },
+        { id: 'ct_goblin', desc: 'Kill 50 Goblins (Combat Task)', reward: 2, status: 'incomplete' },
+        { id: 'ct_cow', desc: 'Kill 25 Cows using only Ranged (Combat Task)', reward: 3, status: 'incomplete' },
+        { id: 'ct_giant_rat', desc: 'Kill the Giant Rat in Lumbridge Sewers (Combat Task)', reward: 4, status: 'incomplete' },
+        { id: 'ct_kalphite_worker', desc: 'Kill a Kalphite Worker (Combat Task)', reward: 5, status: 'incomplete' },
+        { id: 'ct_hill_giant', desc: 'Kill 50 Hill Giants (Combat Task)', reward: 6, status: 'incomplete' }, 
+        { id: 'ct_moss_giant', desc: 'Kill a Moss Giant (Combat Task)', reward: 7, status: 'incomplete' }, 
+        
+        { id: 'ad_cooks_assistant', desc: "Complete the Cook's Assistant quest (Achievement Diary)", reward: 5, status: 'incomplete' },
+        { id: 'ad_chop_willow', desc: 'Chop a Willow tree in Lumbridge (Achievement Diary)', reward: 3, status: 'incomplete' },
+        { id: 'ad_lum_tele', desc: 'Use the Lumbridge Home Teleport (Achievement Diary)', reward: 1, status: 'incomplete' },
+        { id: 'ad_draynor_bank', desc: 'Deposit an item into the Draynor Village Bank (Achievement Diary)', reward: 3, status: 'incomplete' },
+        { id: 'ad_varrock_tele', desc: 'Cast the Varrock Teleport spell (Achievement Diary)', reward: 4, status: 'incomplete' }, 
+        { id: 'ad_al_kharid_gate', desc: 'Pay the toll gate in Al Kharid (Achievement Diary)', reward: 1, status: 'incomplete' }, 
+        { id: 'ad_mine_coal', desc: 'Mine a piece of Coal in Falador (Achievement Diary)', reward: 3, status: 'incomplete' }, 
+        { id: 'ad_run_falador_agi', desc: 'Use the Falador Agility shortcut (Achievement Diary)', reward: 5, status: 'incomplete' }, 
+
+        { id: 'cl_bronze_helmet', desc: 'Equip a Bronze full helmet (Collection Log)', reward: 2, status: 'incomplete' },
+        { id: 'cl_eye_of_newt', desc: 'Obtain an Eye of Newt drop (Collection Log)', reward: 3, status: 'incomplete' },
+        { id: 'cl_rune_essence', desc: 'Mine 100 Rune essence (Collection Log)', reward: 4, status: 'incomplete' },
+        { id: 'cl_curry_leaf', desc: 'Obtain a Curry Leaf from a patch (Collection Log)', reward: 4, status: 'incomplete' },
+        { id: 'cl_cowhide', desc: 'Tan 10 Cowhides in Al Kharid (Collection Log)', reward: 3, status: 'incomplete' }, 
+        { id: 'cl_fishing_net', desc: 'Catch a sardine with a small net (Collection Log)', reward: 2, status: 'incomplete' }, 
+        { id: 'cl_limpwurt_root', desc: 'Obtain a Limpwurt Root drop (Collection Log)', reward: 4, status: 'incomplete' }, 
+
+        { id: 'sm_fish_50', desc: 'Cook 50 successful Trout (Skilling Milestone)', reward: 3, status: 'incomplete' },
+        { id: 'sm_fletch_100', desc: 'Fletch 100 Willow shortbows (Skilling Milestone)', reward: 4, status: 'incomplete' },
+        { id: 'sm_mine_tin', desc: 'Mine 100 Tin Ore (Skilling Milestone)', reward: 2, status: 'incomplete' }, 
+        { id: 'sm_chop_oak', desc: 'Chop 50 Oak Logs (Skilling Milestone)', reward: 3, status: 'incomplete' }, 
+        { id: 'sm_fish_tuna', desc: 'Cook 25 Tuna (Skilling Milestone)', reward: 4, status: 'incomplete' }, 
+        { id: 'sm_make_plank', desc: 'Saw 10 regular Planks (Skilling Milestone)', reward: 2, status: 'incomplete' }, 
     ];
 
-    // --- DOM ELEMENTS ---
     const ppDisplay = document.getElementById('pp-display');
     const logContainer = document.getElementById('log');
     const treeView = document.getElementById('talent-tree-view');
     const treeCanvas = document.getElementById('tree-canvas');
     const treeContainer = document.getElementById('tree-container');
-    const treeSvg = document.getElementById('tree-svg');
+    const treeSvg = document.getElementById('tree-svg'); 
     const statsGrid = document.getElementById('stats-grid-container');
     const questList = document.getElementById('quest-list-container');
     const taskListContainer = document.getElementById('task-list-container');
     const toggleIcons = document.querySelectorAll('.toggle-icon');
     const contentViews = document.querySelectorAll('.content-view');
 
-    // --- PANNING LOGIC ---
     let isPanning = false;
     let startX, startY;
-    let canvasX = 0, canvasY = 0;
-    let initialCanvasX = 0, initialCanvasY = 0;
+    let canvasX = 0;
+    let canvasY = 0;
+    let initialCanvasX = 0;
+    let initialCanvasY = 0;
+    let scale = 0.7; 
+    const scaleFactor = 0.1;
+    const minScale = 0.5;
+    const maxScale = 2.0;
+    
+    const applyTransform = () => {
+        treeCanvas.style.transform = `translate(${canvasX}px, ${canvasY}px) scale(${scale})`;
+    };
 
     treeView.addEventListener('mousedown', (e) => {
         if (e.target.closest('.node')) return;
@@ -138,11 +221,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const dy = e.clientY - startY;
         canvasX = initialCanvasX + dx;
         canvasY = initialCanvasY + dy;
-        treeCanvas.style.transform = `translate(${canvasX}px, ${canvasY}px)`;
-        drawConnections(); // Redraw lines live while panning
+        applyTransform();
     });
 
-    // --- CORE LOGIC ---
+    treeView.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        
+        const treeViewRect = treeView.getBoundingClientRect();
+        const mouseX = e.clientX - treeViewRect.left;
+        const mouseY = e.clientY - treeViewRect.top;
+
+        const delta = e.deltaY * -0.01;
+        const newScale = Math.min(Math.max(minScale, scale + delta * scaleFactor), maxScale);
+
+        if (newScale !== scale) {
+            const scaleChange = newScale / scale;
+
+            canvasX = mouseX - (mouseX - canvasX) * scaleChange;
+            canvasY = mouseY - (mouseY - canvasY) * scaleChange;
+            
+            scale = newScale;
+            applyTransform();
+        }
+    });
 
     const addLog = (message, type) => {
         const p = document.createElement('p');
@@ -160,18 +261,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         toggleIcons.forEach(i => i.classList.remove('active'));
         document.querySelector(`.toggle-icon[data-view="${viewId}"]`)?.classList.add('active');
-        
-        if (viewId === 'talent-tree-view') {
-            setTimeout(drawConnections, 50);
-        }
     };
 
     const unlockNode = (nodeId) => {
         const node = TREE_DATA[nodeId];
-        if (!node || node.status !== 'available' || PLAYER_STATE.pp < node.cost) return;
-
-        PLAYER_STATE.pp -= node.cost;
+        
+        if (node.cost > 0 && (!node || node.status !== 'available' || PLAYER_STATE.pp < node.cost)) return;
+        
+        if (node.cost > 0) {
+            PLAYER_STATE.pp -= node.cost;
+        }
+        
         node.status = 'unlocked';
+
+        if (node.unlocksQuest) {
+            const questToUnlock = PLAYER_STATE.quests.find(q => q.id === node.unlocksQuest);
+            if (questToUnlock && questToUnlock.status === 'not_started') {
+                questToUnlock.status = 'in_progress';
+                addLog(`Quest '${questToUnlock.name}' is now available to complete.`, 'info');
+            }
+        }
 
         if (PLAYER_STATE.skills[node.name]) {
             PLAYER_STATE.skills[node.name].unlocked = true;
@@ -182,15 +291,48 @@ document.addEventListener('DOMContentLoaded', () => {
         updateNodeStatuses();
         renderTree();
         renderSkills();
+        renderQuests(); 
     };
+    
+    const completeQuest = (questId) => {
+        const quest = PLAYER_STATE.quests.find(q => q.id === questId);
+        
+        if (!quest || quest.status === 'complete') return; 
+
+        quest.status = 'complete';
+        addLog(`Quest '${quest.name}' completed!`, 'info');
+        
+        updateNodeStatuses();
+        renderTree();
+        renderQuests(); 
+    }
 
     const updateNodeStatuses = () => {
         Object.keys(TREE_DATA).forEach(id => {
             const node = TREE_DATA[id];
+
+            if (node.id === 'path_might' || node.id === 'path_dexterity' || node.id === 'path_wisdom' || node.id === 'genesis') {
+                 if (node.status === 'locked') {
+                    node.status = 'unlocked';
+                 }
+                 return;
+            }
+
             if (node.status === 'locked') {
                 const allDepsMet = node.deps.every(depId => TREE_DATA[depId]?.status === 'unlocked');
-                if (allDepsMet) {
-                    node.status = 'available';
+                
+                let questRequirementMet = true;
+                if (node.questId) {
+                    const quest = PLAYER_STATE.quests.find(q => q.id === node.questId);
+                    questRequirementMet = quest && quest.status === 'complete';
+                }
+
+                if (allDepsMet && questRequirementMet) {
+                    if (node.cost === 0) {
+                        unlockNode(id);
+                    } else {
+                        node.status = 'available';
+                    }
                 }
             }
         });
@@ -209,12 +351,38 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTree();
     };
 
-    // --- RENDER FUNCTIONS ---
-
     function renderTree() {
+        const questStatusMap = PLAYER_STATE.quests.reduce((acc, q) => {
+            acc[q.id] = q.status;
+            return acc;
+        }, {});
+
         treeContainer.innerHTML = '';
+        treeSvg.innerHTML = '';
+
         Object.keys(TREE_DATA).forEach(id => {
             const node = TREE_DATA[id];
+
+            if (node.deps && node.deps.length > 0) {
+                node.deps.forEach(depId => {
+                    const parentNode = TREE_DATA[depId];
+                    if (!parentNode) return;
+
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', parentNode.pos.x);
+                    line.setAttribute('y1', parentNode.pos.y);
+                    line.setAttribute('x2', node.pos.x);
+                    line.setAttribute('y2', node.pos.y);
+
+                    const lineClass = (node.status === 'unlocked' || node.status === 'available') ? 'line-unlocked' : 'line-locked';
+                    line.setAttribute('class', lineClass);
+
+                    treeSvg.appendChild(line);
+                });
+            }
+
+            if (node.type === 'system') return; 
+
             const nodeEl = document.createElement('div');
             nodeEl.id = id;
             nodeEl.className = `node node-${node.type} ${node.status}`;
@@ -229,10 +397,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 overlayIcon = '<i class="fas fa-lock"></i>';
             } else if (node.status === 'unlocked') {
                 overlayIcon = '<i class="fas fa-check"></i>';
+            } else if (node.questId && questStatusMap[node.questId] !== 'complete') {
+                 overlayIcon = '<i class="fas fa-exclamation-circle"></i>';
             }
 
             const canAfford = PLAYER_STATE.pp >= node.cost;
             const costColor = canAfford ? 'var(--text-yellow)' : 'var(--status-red)';
+            const costText = node.cost === 0 ? 'FREE' : `${node.cost} PP`;
+            const finalCostColor = node.cost === 0 ? 'var(--status-green)' : costColor;
 
             nodeEl.innerHTML = `
                 ${iconHtml}
@@ -240,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="osrs-panel tooltip">
                     <h4>${node.name}</h4>
                     <p>${node.desc}</p>
-                    <p class="cost" style="color: ${costColor}">Cost: ${node.cost} PP</p>
+                    <p class="cost" style="color: ${finalCostColor}">Cost: ${costText}</p>
                 </div>
             `;
 
@@ -249,38 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             treeContainer.appendChild(nodeEl);
-        });
-        drawConnections();
-    }
-
-    function drawConnections() {
-        treeSvg.innerHTML = '';
-        const svgRect = treeSvg.getBoundingClientRect();
-        if (svgRect.width === 0) return;
-
-        Object.keys(TREE_DATA).forEach(id => {
-            const node = TREE_DATA[id];
-            node.deps.forEach(depId => {
-                const p1El = document.getElementById(depId);
-                const p2El = document.getElementById(id);
-                if (!p1El || !p2El) return;
-
-                const p1Rect = p1El.getBoundingClientRect();
-                const p2Rect = p2El.getBoundingClientRect();
-
-                // Calculate position relative to the SVG canvas itself
-                const startX = (p1Rect.left + p1Rect.width / 2) - svgRect.left;
-                const startY = (p1Rect.top + p1Rect.height / 2) - svgRect.top;
-                const endX = (p2Rect.left + p2Rect.width / 2) - svgRect.left;
-                const endY = (p2Rect.top + p2Rect.height / 2) - svgRect.top;
-
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M${startX},${startY} C${startX},${(startY + endY) / 2} ${endX},${(startY + endY) / 2} ${endX},${endY}`);
-                
-                const isUnlocked = TREE_DATA[depId].status === 'unlocked';
-                path.setAttribute('class', `tree-connection-path ${isUnlocked ? 'unlocked' : 'locked'}`);
-                treeSvg.appendChild(path);
-            });
         });
     }
 
@@ -308,11 +448,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderQuests() {
+        const unlockedQuestPrerequisites = Object.keys(TREE_DATA)
+            .filter(id => TREE_DATA[id].unlocksQuest && TREE_DATA[id].status === 'unlocked')
+            .map(id => TREE_DATA[id].unlocksQuest);
+
         questList.innerHTML = '';
         PLAYER_STATE.quests.forEach(quest => {
             const item = document.createElement('li');
             item.className = 'quest-item';
-            item.innerHTML = `<div class="quest-status ${quest.status}"></div><span>${quest.name}</span>`;
+
+            const isTreeUnlocked = unlockedQuestPrerequisites.includes(quest.id);
+            
+            let statusClass = quest.status;
+            let clickable = false;
+            let isLocked = false;
+
+            if (quest.status === 'complete') {
+                statusClass = 'complete';
+            } else if (isTreeUnlocked) {
+                statusClass = quest.status === 'not_started' ? 'in_progress' : quest.status;
+                clickable = true;
+            } else {
+                statusClass = 'locked';
+                isLocked = true;
+            }
+
+            item.innerHTML = `
+                <div class="quest-status ${statusClass}"></div>
+                <span>${quest.name}</span>
+                ${isLocked ? '<i class="fas fa-lock" style="margin-left: auto;"></i>' : ''}
+            `;
+            
+            if (clickable) {
+                item.classList.add('clickable');
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', () => {
+                    completeQuest(quest.id);
+                });
+            }
+
             questList.appendChild(item);
         });
     }
@@ -343,12 +517,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- INITIALIZATION ---
     toggleIcons.forEach(icon => {
         icon.addEventListener('click', () => switchView(icon.dataset.view));
     });
 
-    window.addEventListener('resize', drawConnections);
+    window.addEventListener('resize', applyTransform); 
 
     updateResources();
     updateNodeStatuses();
@@ -356,6 +529,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSkills();
     renderQuests();
     renderTasks();
-    addLog('Welcome to Path of the Prodigy.', 'system');
+    addLog('Welcome to Path of the Prodigy. Your 5 initial PP are ready to spend!', 'system');
     switchView('talent-tree-view');
 });
